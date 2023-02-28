@@ -904,22 +904,10 @@ class FlamingoPALM(nn.Module):
   max_video_frames=None
   only_attend_immediate_media=True
 
-  def __init__(self, *, 
-    super().__init__()
+  num_pixels = 1024
 
-
-    self.
-
-    self.
-    
-
-    
-
-    self.to_logits[-1].weight = self.token_emb.weight
-
-    nn.init.normal_(self.token_emb.weight, std=0.02)
-
-  def forward(self, text, *, images=None, videos=None, embeds=None):
+  @nn.compact
+  def __call__(self, text, *, images=None, videos=None, embeds=None):
 
     token_emb = nn.Embedding(self.num_tokens, self.dim)
 
@@ -940,7 +928,11 @@ class FlamingoPALM(nn.Module):
 
     to_logits_norm = LayerNorm(self.dim)
 
-    to_logits_dense = nn.Dense(self.num_tokens, bias=False)
+    to_logits_dense = nn.Dense(self.num_pixels, bias=False)
+
+    to_logits[-1].weight = token_emb.weight
+
+    self.token_emb.weight = nn.initializers.normal(key, self.token_emb.weight.shape) * 0.02
 
     batch = text.shape[0]
 
@@ -964,7 +956,7 @@ class FlamingoPALM(nn.Module):
 
     media_locations = text == self.media_token_id
 
-    text_tokens = self.token_emb(text)
+    text_tokens = token_emb(text)
 
     assert not (exists(embeds) and exists(images) or exists(videos))
 
